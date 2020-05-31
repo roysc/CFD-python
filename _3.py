@@ -4,10 +4,10 @@ from collections import namedtuple
 import numpy as np
 from matplotlib import pyplot
 
+class _Window(namedtuple('_W', ('a', 'ix'))):
+    def __getitem__(self, i):
+        return self.a[(self.ix+i) % len(self.a)]
 def window(u):
-    class _Window(namedtuple('_W', ('a', 'ix'))):
-        def __getitem__(self, i):
-            return self.a[(self.ix+i) % len(self.a)]
     for ix in range(0, len(u)):
         yield ix, _Window(u, ix)
 
