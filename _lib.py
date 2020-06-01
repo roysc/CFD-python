@@ -31,6 +31,9 @@ def mkarray(shape):
 def diffprev(a, shift=1):
     return np.roll(np.diff(a, append=a[0:shift]), shift)
 
+def linspaces(bounds, nr):
+    return [np.linspace(a, b, n) for a, b, n in zip(*bounds, nr)]
+
 def compare(x, u0, funcs, n=1, error=0.01, show=True):
     err = 0.0
     for fa, fb in zip(funcs[:-1], funcs[1:]):
