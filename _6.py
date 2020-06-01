@@ -27,9 +27,9 @@ dt = sigma * min(*dP)
 dx, dy = dP
 
 # vectorized
-def _step_v(u, v):
+def _step_v(u, v, nt):
     # u, v = U.copy()
-    for n in range(num_t):
+    for n in range(nt):
         un = u.copy()
         vn = v.copy()
         u[1:, 1:] = (un[1:, 1:] - 
@@ -56,13 +56,15 @@ _u = np.ones(num_P)
 _v = np.ones(num_P)
 
 # set hat function I.C. : u(.5<=x<=1 && .5<=y<=1 ) is 2
-def set_hat(u, dr):
-    (xa, ya), (xb, yb) = (.5/dr), (1/dr + 1)
+def set_hat(u, dr, box=np.array([[.5, 1], [.5, 1]])):
+    (xa, ya), (xb, yb) = (box[:, 0]/dr), (box[:, 1]/dr + 1)
     u[int(xa):int(xb), int(ya):int(yb)] = 2
-set_hat(_u, dP)
-set_hat(_v, dP)
 
-_u, _v = _step_v(_u, _v)
+box = np.array([[.5,1], [.5, .7]])
+set_hat(_u, dP, box)
+set_hat(_v, dP, box)
+
+_u, _v = _step_v(_u, _v, num_t)
 
 fig = pyplot.figure(figsize=(11, 7), dpi=100)
 ax = fig.gca(projection='3d')
