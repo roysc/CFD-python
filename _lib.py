@@ -28,5 +28,15 @@ def plot(xspace, u, n, step):
     pyplot.show()
     return u
 
-def compare(*funcs):
-    pass
+def compare(x, u0, funcs, n=1, error=0.01, show=True):
+    err = 0.0
+    for fa, fb in zip(funcs[:-1], funcs[1:]):
+        ua = fa(u0.copy())
+        ub = fb(u0.copy())
+        # eq &= np.all(np.abs(ua - ub) < error)
+        err += np.sum(np.abs(ua - ub))
+        if show:
+            pyplot.plot(x, ua)
+            pyplot.plot(x, ub)
+            pyplot.show()
+    return err

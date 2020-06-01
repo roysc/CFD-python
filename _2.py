@@ -40,16 +40,17 @@ def _step_v(u):
         u = u - u * dt/dx * diff
     return u
 
-def _run(u, n, step):
-    xspace = np.linspace(0, 2, num_x)
+def _run(x, u, n, step):
     for _ in range(n): 
-        pyplot.plot(xspace, u[:num_x])
+        pyplot.plot(x, u[:num_x])
         u = step(u)
+    pyplot.show()
     return u
 
+x = np.linspace(0, 2, num_x)
 _u = np.ones(num_x)
 # hat function
 _u[int(.5 / dx):int(1/dx + 1)] = 2
-_run(_u, 32, _step_v)
 
-pyplot.show()
+print(compare(x, _u, (_step_i, _step_v)))
+_run(x, _u, 32, _step_v)

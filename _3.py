@@ -4,6 +4,8 @@ from collections import namedtuple
 import numpy as np
 from matplotlib import pyplot
 
+from _lib import compare
+
 class _Window(namedtuple('_W', ('a', 'ix'))):
     def __getitem__(self, i):
         return self.a[(self.ix+i) % len(self.a)]
@@ -45,23 +47,24 @@ def _step_i(u):
 
 def rolldiff(a, shift=1):
     return np.roll(np.diff(a, append=a[0:shift]), shift)
-    
+
 # vectorized
 def _step_v(u):
     for n in range(num_t):
         u = u + nu * dt/dx**2 * (rolldiff(np.roll(u, -1)) - rolldiff(u))
     return u
 
-def _run(u, n, step):
-    xspace = np.linspace(0, 2, num_x)
-    for _ in range(n): 
-        pyplot.plot(xspace, u[:num_x])
+def _run(x, u, n, step):
+    for _ in range(n):
+        pyplot.plot(x, u[:num_x])
         u = step(u)
+    pyplot.show()
     return u
 
+x = np.linspace(0, 2, num_x)
 _u = np.ones(num_x)
 # hat function
 _u[int(.5 / dx):int(1/dx + 1)] = 2
-_run(_u, 32, _step_v)
 
-pyplot.show()
+print(compare(x, _u, (_step_i, _step_v)))
+_run(x, _u, 32, _step_v)
