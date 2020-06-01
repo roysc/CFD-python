@@ -21,9 +21,6 @@ dP = space_size / (num_P - 1)
 sigma = 0.2
 dt = sigma * min(*dP)
 
-def rolldiff(a, shift=1):
-    return np.roll(np.diff(a, append=a[0:shift]), shift)
-
 # iterative
 def _step_i(u):
     u = u.copy()

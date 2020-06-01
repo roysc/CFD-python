@@ -5,7 +5,7 @@ import sympy
 from sympy import init_printing
 from sympy.utilities.lambdify import lambdify
 
-from _lib import Periodic, plot, compare
+from _lib import Periodic, plot, compare, diffprev
 
 tau = 2*math.pi
 init_printing(use_latex=True)
@@ -21,9 +21,6 @@ num_t = v(24,)
 nu = 0.3
 sigma = 0.2
 dt = sigma * dx**2 / nu
-
-def rolldiff(a, shift=1):
-    return np.roll(np.diff(a, append=a[0:shift]), shift)
 
 # iterative
 def _step_i(u):
@@ -41,8 +38,8 @@ def _step_i(u):
 # vectorized
 def _step_v(u):
     for n in range(num_t):
-        u -= u * dt / dx * rolldiff(u)
-        u += nu * dt/dx**2 * (rolldiff(np.roll(u, -1)) - rolldiff(u))
+        u = u - u * dt / dx * diffprev(u)\
+            + nu * dt/dx**2 * (diffprev(np.roll(u, -1)) - diffprev(u))
     return u
 
 # initial condition

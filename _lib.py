@@ -21,6 +21,9 @@ class Closed:
     def array_length(self, nx):
         return nx
 
+def diffprev(a, shift=1):
+    return np.roll(np.diff(a, append=a[0:shift]), shift)
+
 def steps(u, n, step):
     for _ in range(n):
         u = step(u)
