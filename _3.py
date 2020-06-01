@@ -23,7 +23,6 @@ class B:
         def array_length(self, nx):
             return nx
 
-boundary = B.Periodic()
 def v(*a): return a[0]
 
 space_size = v(2,)

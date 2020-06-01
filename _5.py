@@ -5,12 +5,11 @@ import numpy as np
 from matplotlib import pyplot, cm
 from mpl_toolkits.mplot3d import Axes3D    ##New Library required for projected 3d plots
 
-from _lib import Periodic, plot, compare
+from _lib import plot, compare
 
 tau = 2*math.pi
 
 def v(*a): return np.array(a)
-boundary = Periodic()
 
 # constants
 space_size = v(2,2)

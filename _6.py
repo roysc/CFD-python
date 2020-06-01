@@ -4,12 +4,11 @@ import numpy as np
 from matplotlib import pyplot, cm
 from mpl_toolkits.mplot3d import Axes3D    ##New Library required for projected 3d plots
 
-from _lib import Periodic, plot
+from _lib import plot
 
 tau = 2*math.pi
 
 dim = 2
-boundary = Periodic()
 def _a(*a):
     if len(a) == 1:
         return np.full((dim,), a[0])

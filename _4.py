@@ -5,13 +5,12 @@ import sympy
 from sympy import init_printing
 from sympy.utilities.lambdify import lambdify
 
-from _lib import Periodic, plot, compare, diffprev
+from _lib import plot, compare, diffprev
 
 tau = 2*math.pi
 init_printing(use_latex=True)
 
 def v(*a): return a[0]
-boundary = Periodic()
 
 # constants
 space_size = v(2,)
