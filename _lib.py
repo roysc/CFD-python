@@ -21,12 +21,20 @@ class Closed:
     def array_length(self, nx):
         return nx
 
-def plot(xspace, u, n, step):
+def steps(u, n, step):
     for _ in range(n):
-        pyplot.plot(xspace, u)
         u = step(u)
+        yield u
+        # yield u
+
+def plot_steps(x, steps):
+    for u in steps:
+        pyplot.plot(x, u)
     pyplot.show()
     return u
+
+def plot(x, u, n, step):
+    return plot_steps(x, steps(u, n, step))
 
 def compare(x, u0, funcs, n=1, error=0.01, show=True):
     err = 0.0
