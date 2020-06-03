@@ -19,7 +19,7 @@ def _show_slices(slices):
     ret = ', '.join(_show_slice(s) for s in slices)
     return ret
 
-def _shape_concat(*s):
+def shape_concat(*s):
     tups = ()
     for a in s:
         if isinstance(a, int):
@@ -28,16 +28,13 @@ def _shape_concat(*s):
             tups += tuple(a)
     return tups
 
-def wall_boundary(u, height):
-    D = len(np.shape(u))
+def wall_boundary(shape, u, height):
+    D = len(shape)
     for d, i in product(range(D), (0, -1)):
         k = [slice(None)] * D
         k[d] = i
+        # print('wall[{}] = {}'.format(_show_slices(k), height))
         u[tuple(k)] = height
-
-class WallBoundary(namedtuple('_', 'height')):
-    def enforce(self, u):
-        wall_boundary(u, self.height)
 
 class Periodic:
     def array_length(self, nx):
@@ -66,7 +63,7 @@ class SliceWindow:
         # self.data_slice = data
         a_shape = np.shape(a)
         if k is not None:
-            full_shape = _shape_concat(shape, k)
+            full_shape = shape_concat(shape, k)
             assert full_shape == a_shape
         else:
             if shape == a_shape: # 1-dim
@@ -88,25 +85,12 @@ class SliceWindow:
         # return slice(i + (s.start or 0), i or s.stop, s.step)
         return slice(i+1, i or None)
 
-    # # Return array = [ a_i[0]-a_i[-1],  ..., a_k[0]-a_k[-1] ]
-    # def diff(self, i):
-    #     sfull = (self.data_slice,) * self.D
-    #     slices = (self._diff_slice(i),) * self.D # shift along each axis
-    #     print(f"diff: [{', '.join(_show_slice(s) for s in slices)}]")
-
-    #     def at(s): return self.a[tuple(s)]
-    #     return self.a[sfull] - self.a[slices]
-
     def diff(self, i):
         sfull = [self.data_slice,] * self.D
-        # slices = (self._diff_slice(i),) * self.D # shift along each axis
-        # print(f"diff: [{', '.join(_show_slice(s) for s in slices)}]")
-        # keys = [] * self.D
-        # keys = [] * self.D
         keys = []
         for ax in range(self.D):
             slices = sfull[:]
-            slices[ax] = self._diff_slice(i)
+            slices[ax] = self._diff_slice(i)            # shift along each axis
             keys.append(slices)
 
         # return a D x S matrix?
@@ -114,7 +98,7 @@ class SliceWindow:
             self.a[tuple(sfull)] - self.a[tuple(keys[ax])]
             for ax in range(self.D)
         ]
-        return np.array(ret).T
+        return np.array(ret)
 
     def __repr__(self):
         return f'SliceWindow([{_show_slice(self.data_slice)}] .a=({self.a.shape} {self.a.dtype})'
@@ -136,9 +120,6 @@ def _test():
     s = SliceWindow((4,4), u)
     assert(s.slice_shape == (3,3))
     assert(s[:].shape == s.slice_shape)
-    # assert(s.diff(-1).shape == s.slice_shape)
-    # print(s.diff(-1) * s[:])
-    # print(np.dot(s.diff(-1), s[:]))
 
     uv = np.random.randn(4,4,2)
     s = SliceWindow((4,4), uv, k=2)
@@ -149,10 +130,8 @@ def _test():
     assert(s[:].shape == (3,3,2))
 
     # multiply vec type by diff matrix
-    g = np.array([0,1])
-    print(s.diff(-1).shape)
-    print(s.diff(-1) * g)
-    # print(s.diff(-1) * s[:])
+    # g = np.array([0,1])
+    # print(s.diff(-1).shape)
     # print(np.dot(s.diff(-1), s[:]))
 _test()
 

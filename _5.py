@@ -6,13 +6,13 @@ from matplotlib import pyplot, cm
 from mpl_toolkits.mplot3d import Axes3D    ##New Library required for projected 3d plots
 
 import _lib
-from _lib import plot, compare
+from _lib import plot, compare, wall_boundary
 
 # def v(*a): return np.array(a)
 v = _lib.mkarray((2,))
 
 # constants
-bounds = _lib.WallBoundary(1)
+wall = (1)
 rbox = [v(0), v(2)]
 num_r = v(11)
 num_t = 100
@@ -32,16 +32,15 @@ def _step_it(u):
             for i in range(1, col):
                 u[j, i] = (un[j, i] - (c * dt / dx * (un[j, i] - un[j, i - 1])) -
                                       (c * dt / dy * (un[j, i] - un[j - 1, i])))
-                bounds.enforce(u)
+                wall_boundary(num_r, u, wall)
     return u
 
 # vectorized
 def _step_vec(u):
     U = _lib.SliceWindow(u.shape, u)
     for n in range(num_t):
-        g = c * dt / dr
-        U[:] = U[:] - np.dot(U.diff(-1), g)
-        bounds.enforce(u)
+        U[:] = U[:] - np.dot(U.diff(-1).T, c * dt / dr)
+        wall_boundary(num_r, u, wall)
     return u
 
 # dim = 2
