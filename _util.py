@@ -11,13 +11,31 @@ def mkarray(shape):
         return np.array(a)
     return _a
 
-def diffprev(a, shift=1, axis=None):
-    return np.roll(np.diff(a, append=a[0:shift], axis=axis), shift, axis=axis)
+def slices_with(n, axis, s):
+    slices = [slice(None)] * n
+    slices[axis] = s
+    return tuple(slices)
+
+def diffprev(a, shift=1, axis=-1):
+    """
+    Calculate the n-th discrete difference along the given axis with a
+    periodic boundary condition
+
+    The first difference is given by ``out[i] = a[i] - a[i-1]`` along
+    the given axis, higher differences are calculated by using `diff`
+    recursively.
+    """
+    tail = a[slices_with(len(np.shape(a)), axis, slice(0, shift))]
+    return np.roll(np.diff(a, shift, append=tail, axis=axis), shift, axis=axis)
+
+def diffnext(a, shift=1, axis=-1):
+    tail = a[slices_with(len(np.shape(a)), axis, slice(0, shift))]
+    return np.diff(a, shift, append=tail, axis=axis)
 
 def linspaces(bounds, nr):
     return [np.linspace(a, b, n) for a, b, n in zip(*bounds, nr)]
 
-def compare(x, u0, funcs, n=1, error=0.01, show=True):
+def compare(x, u0, funcs, n=1, error=0.01, show=False):
     err = 0.0
     for fa, fb in zip(funcs[:-1], funcs[1:]):
         ua = fa(u0.copy())
