@@ -43,19 +43,18 @@ def _step_vec(u):
         wall_boundary(num_r, u, wall)
     return u
 
-# dim = 2
-# nr_k = tuple(num_r) + (dim,)
-_u = np.ones(num_r)
-r = [np.linspace(0, size, num) for size, num in zip(rbox[1], num_r)]
+def _run():
+    r = [np.linspace(0, size, num) for size, num in zip(rbox[1], num_r)]
 
-# set hat function I.C. : u(.5<=x<=1 && .5<=y<=1 ) is 2
-_u[int(.5 / dy):int(1 / dy + 1),int(.5 / dx):int(1 / dx + 1)] = 2
+    _u = np.ones(num_r)
+    # set hat function I.C. : u(.5<=x<=1 && .5<=y<=1 ) is 2
+    _u[int(.5 / dy):int(1 / dy + 1),int(.5 / dx):int(1 / dx + 1)] = 2
+    _u = _step_vec(_u)
 
-_u = _step_vec(_u)
+    fig = pyplot.figure(figsize=(8,8), dpi=100)
+    ax = fig.gca(projection='3d')
+    X, Y = np.meshgrid(*r)
+    surf = ax.plot_surface(X, Y, _u, cmap=cm.viridis)
+    pyplot.show()
 
-fig = pyplot.figure(figsize=(8,8), dpi=100)
-ax = fig.gca(projection='3d')
-X, Y = np.meshgrid(*r)
-surf = ax.plot_surface(X, Y, _u, cmap=cm.viridis)
-
-pyplot.show()
+if __name__ == '__main__': _run()

@@ -60,10 +60,12 @@ def _run(x, u, n, step):
     pyplot.show()
     return u
 
-x = np.linspace(0, 2, num_x)
-_u = np.ones(num_x)
-# hat function
-_u[int(.5 / dx):int(1/dx + 1)] = 2
+def test():
+    # assert compare(x, _u, (_step_i, _step_v))
+    pass
 
-print(compare(x, _u, (_step_i, _step_v)))
-_run(x, _u, 32, _step_v)
+if __name__ == '__main__':
+    x = np.linspace(0, 2, num_x)
+    u = np.ones(num_x)
+    u[int(.5 / dx):int(1/dx + 1)] = 2 # hat function
+    _run(x, u, 32, _step_v)

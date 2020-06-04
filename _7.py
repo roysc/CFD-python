@@ -25,7 +25,9 @@ def diffuse(u, nt):
     for n in range(nt + 1):
         U[:] = U[:] + np.dot(U.diff_central().T, nu * dt / dr**2)
         _lib.wall_boundary(shape_r, u, wall)
+    return u
 
+def plot(u):
     P = [np.linspace(0, size, num) for size, num in zip(space_size, shape_r)]
     X, Y = np.meshgrid(*P)
 
@@ -36,15 +38,15 @@ def diffuse(u, nt):
     ax.set_zlim(1, 2.5)
     ax.set_xlabel('$x$')
     ax.set_ylabel('$y$');
-    return u
+    pyplot.show()
 
 # set hat function I.C. : u(.5<=x<=1 && .5<=y<=1 ) is 2
 def set_hat(u, dr, box=np.array([[.5, 1], [.5, 1]])):
     (xa, ya), (xb, yb) = (box[:, 0]/dr), (box[:, 1]/dr + 1)
     u[int(xa):int(xb), int(ya):int(yb)] = 2
 
-_u = np.ones(shape_r)
-set_hat(_u, dr)
-diffuse(_u, num_t)
-
-pyplot.show()
+if __name__ == '__main__':
+    _u = np.ones(shape_r)
+    set_hat(_u, dr)
+    diffuse(_u, num_t)
+    plot(_u)
