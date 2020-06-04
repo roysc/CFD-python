@@ -37,9 +37,9 @@ def _step_it(u):
 
 # vectorized
 def _step_vec(u):
-    U = _lib.SliceWindow(u.shape, u)
+    U = _lib.SliceWindow(u)
     for n in range(num_t):
-        U[:] = U[:] - np.dot(U.diff(-1).T, c * dt / dr)
+        U[:] = U[:] - np.dot(U.diff_prev().T, c * dt / dr)
         wall_boundary(num_r, u, wall)
     return u
 
@@ -51,7 +51,6 @@ r = [np.linspace(0, size, num) for size, num in zip(rbox[1], num_r)]
 # set hat function I.C. : u(.5<=x<=1 && .5<=y<=1 ) is 2
 _u[int(.5 / dy):int(1 / dy + 1),int(.5 / dx):int(1 / dx + 1)] = 2
 
-# _u = _step_it(_u)
 _u = _step_vec(_u)
 
 fig = pyplot.figure(figsize=(8,8), dpi=100)

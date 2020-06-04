@@ -20,18 +20,17 @@ dr = rbox / (shape_r - 1)
 sigma = .2
 dt = sigma * dr[0]
 
-dx, dy = dr
-
 # vectorized
 def _step_vec(uv, nt):
-    UV = _lib.SliceWindow(shape_r, uv, k=dim)
+    UV = _lib.SliceWindow(uv, dim)
     for n in range(nt):
-        UV[:] = UV[:] - np.dot(UV.diff(-1).T * UV[:], c * dt / dr).T
+        UV[:] = UV[:] - np.dot(UV.diff_prev().T * UV[:], c * dt / dr).T
         _lib.wall_boundary(shape_r, uv, wall)
 
     return uv
 
 ushape = tuple(shape_r) + (dim,)
+# ushape = _lib.shape_concat(shape_r, dim)
 _uv = np.ones(ushape)
 
 # set hat function I.C. : u(.5<=x<=1 && .5<=y<=1 ) is 2
