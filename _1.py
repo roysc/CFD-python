@@ -38,7 +38,6 @@ def _step_v(u):
         u = u - c * dt/dx * diff
     return u
 
-
 def _plot(u):
     pyplot.plot(np.linspace(0, 2, num_x), u[:num_x])
 
@@ -52,5 +51,10 @@ def _run(n, step):
         _u = step(_u)
     return _u
 
-a=_run(8, _step_v)
-pyplot.show()
+if __name__ == '__main__':
+    _run(8, _step_v)
+    pyplot.show()
+
+def test():
+    error = 0.01
+    # assert compare(_step_i, _step_v) < error

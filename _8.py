@@ -5,8 +5,6 @@ import numpy as np
 from matplotlib import pyplot, cm
 from mpl_toolkits.mplot3d import Axes3D
 
-from _lib import plot
-
 dim = 2
 def _a(*a):
     if len(a) == 1:

@@ -37,7 +37,6 @@ nx, ny = nr
 _p = np.zeros(nr)
 _b = np.zeros(nr)
 _r = [np.linspace(0, s, n) for s, n in zip(bounds[1], nr)]
-_r = _lib.linspaces(bounds, nr)
 
 # source
 _b[int(ny/4), int(nx/4)] = 100
