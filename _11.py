@@ -4,84 +4,62 @@ import numpy as np
 from matplotlib import pyplot, cm
 
 import _lib
+from _lib import Window, s_
 
-def build_b(rho, dt, uv, dr):
-    dx, dy = dr
-    u, v = uv
-    b = np.zeros_like(u)
-    b[1:-1, 1:-1] = rho * \
-        (1 / dt * ((u[1:-1, 2:] - u[1:-1, 0:-2]) / (2 * dx) +
-                   (v[2:, 1:-1] - v[0:-2, 1:-1]) / (2 * dy)) -
-         ((u[1:-1, 2:] - u[1:-1, 0:-2]) / (2 * dx))**2 -
-         2 * ((u[2:, 1:-1] - u[0:-2, 1:-1]) / (2 * dy) *
-              (v[1:-1, 2:] - v[1:-1, 0:-2]) / (2 * dx)) -
-         ((v[2:, 1:-1] - v[0:-2, 1:-1]) / (2 * dy))**2)
+# transpose first to last
+def T0(a):
+    axes = tuple(range(1, len(np.shape(a)))) + (0,)
+    return np.transpose(a, axes)
 
-    return b
+def diag(a):
+    return np.array([a[i][i] for i in range(len(a))])
 
-def pressure_poisson(p, dr, b, nit=50):
-    dx, dy = dr
-    for q in range(nit):
-        pn = p.copy()
-        p[1:-1, 1:-1] = (((pn[1:-1, 2:] + pn[1:-1, 0:-2]) * dy**2 +
-                          (pn[2:, 1:-1] + pn[0:-2, 1:-1]) * dx**2) /
-                          (2 * (dx**2 + dy**2)) -
-                          dx**2 * dy**2 / (2 * (dx**2 + dy**2)) *
-                          b[1:-1,1:-1])
+def build_b(rho, dt, UV, dr):
+    m = s_[1:-1, 1:-1]
+    b = np.zeros_like(UV.array, shape=UV.data_shape)
+    B = Window(b, 1, m)
 
-        p[:, -1] = p[:, -2] # dp/dx = 0 at x = 2
-        p[0, :] = p[1, :]   # dp/dy = 0 at y = 0
-        p[:, 0] = p[:, 1]   # dp/dx = 0 at x = 0
-        p[-1, :] = 0        # p = 0 at y = 2
+    D = (UV.n[1] - UV.n[-1]).transpose((3,0,1,2))
+    C = T0(diag(D)) / (2 * dr)
+    B[:] = rho * (1 / dt * np.sum(C, axis=-1) -
+                  2 * np.prod(T0(diag(np.flip(D, axis=0))) / (2 * dr), axis=-1) -
+                  np.sum(C * C, axis=-1))
+    return B
 
-    return p
+def poisson_bounds(p):
+    # Neumann conditions
+    p[0, :] = p[1, :]
+    p[-1,:] = p[-2, :]
+    p[:, 0] = p[:, 1]
+    p[:,-1] = 0
 
-def cavity_flow(nt, uv, dt, dr, p, rho, nu):
-    u, v = uv
-    dx, dy = dr
-    un = np.empty_like(u)
-    vn = np.empty_like(v)
-    b = np.zeros_like(u)
+def poisson(P, B, dr, nt=50):
+    for _ in range(nt):
+        N = np.transpose(P.n[-1] + P.n[1], (1,2,0))
+        P[:] = (np.dot(N, np.flip(dr)**2) - B[:] * np.prod(dr**2)) / (2 * np.dot(dr, dr))
+        poisson_bounds(P.array)
+    return P
 
+def cavity_bounds(uv):
+    uv[0, :]  = [0, 0]
+    uv[-1, :] = [0, 0]
+    uv[:, 0]  = [0, 0]
+    uv[:, -1] = [1, 0]    # set velocity on cavity lid equal to 1
+
+def cavity_flow(UV, P, dr, dt, rho, nu):
+    UV[:] += (
+        - np.sum(UV.diff_prev().T * (UV[:] * dt/dr), axis=-1).T
+        - T0(P.n[1] - P.n[-1]) * dt / (2 * rho * dr)
+        + nu * np.dot(T0(UV.diff_central()), dt / dr**2)
+    )
+
+def solve(UV, P, nt, dt, dr, rho, nu):
     for n in range(nt):
-        un = u.copy()
-        vn = v.copy()
-
-        b = build_b(rho, dt, uv, dr)
-        p = pressure_poisson(p, dr, b)
-
-        u[1:-1, 1:-1] = (un[1:-1, 1:-1]-
-                         un[1:-1, 1:-1] * dt / dx *
-                        (un[1:-1, 1:-1] - un[1:-1, 0:-2]) -
-                         vn[1:-1, 1:-1] * dt / dy *
-                        (un[1:-1, 1:-1] - un[0:-2, 1:-1]) -
-                         dt / (2 * rho * dx) * (p[1:-1, 2:] - p[1:-1, 0:-2]) +
-                         nu * (dt / dx**2 *
-                        (un[1:-1, 2:] - 2 * un[1:-1, 1:-1] + un[1:-1, 0:-2]) +
-                         dt / dy**2 *
-                        (un[2:, 1:-1] - 2 * un[1:-1, 1:-1] + un[0:-2, 1:-1])))
-
-        v[1:-1,1:-1] = (vn[1:-1, 1:-1] -
-                        un[1:-1, 1:-1] * dt / dx *
-                       (vn[1:-1, 1:-1] - vn[1:-1, 0:-2]) -
-                        vn[1:-1, 1:-1] * dt / dy *
-                       (vn[1:-1, 1:-1] - vn[0:-2, 1:-1]) -
-                        dt / (2 * rho * dy) * (p[2:, 1:-1] - p[0:-2, 1:-1]) +
-                        nu * (dt / dx**2 *
-                       (vn[1:-1, 2:] - 2 * vn[1:-1, 1:-1] + vn[1:-1, 0:-2]) +
-                        dt / dy**2 *
-                       (vn[2:, 1:-1] - 2 * vn[1:-1, 1:-1] + vn[0:-2, 1:-1])))
-
-        u[0, :]  = 0
-        u[:, 0]  = 0
-        u[:, -1] = 0
-        u[-1, :] = 1    # set velocity on cavity lid equal to 1
-        v[0, :]  = 0
-        v[-1, :] = 0
-        v[:, 0]  = 0
-        v[:, -1] = 0
-
-    return (u, v), p
+        B = build_b(rho, dt, UV, dr)
+        P = poisson(P, B, dr, nt)
+        cavity_flow(UV, P, dr, dt, rho, nu)
+        cavity_bounds(UV.array)
+    return UV, P
 
 # constants
 rho = 1
@@ -89,34 +67,34 @@ nu = .1
 dt = .001
 
 def run(nr, dr):
-    u = np.zeros(nr)
-    v = np.zeros(nr)
+    m = s_[1:-1, 1:-1]
+    uv = np.zeros(tuple(nr) + (dim,))
     p = np.zeros(nr)
-    nt = 100
-    return cavity_flow(nt, (u, v), dt, dr, p, rho, nu)
+    UV = Window(uv, dim, m)
+    P = _lib.Window(p, mask=m)
 
-def plot_field(X, Y, p, uv):
-    u, v = uv
+    nt = 100
+    return solve(UV, P, nt, dt, dr, rho, nu)
+
+def plot_field(X, Y, p, u, v):
     fig = pyplot.figure(figsize=(11, 7), dpi=100)
     pyplot.contour(X, Y, p, alpha=0.5, cmap=cm.viridis)
     pyplot.colorbar()
     pyplot.contour(X, Y, p, cmap=cm.viridis)
-    # pyplot.quiver(X[::2, ::2], Y[::2, ::2], u[::2, ::2], v[::2, ::2])
     pyplot.streamplot(X, Y, u, v)
     pyplot.xlabel('X')
     pyplot.ylabel('Y')
 
 dim = 2
 _a = _lib.mkarray((dim,))
-
 nr = _a(41)
-
 rmin = _a(0)
 rmax = _a(2)
 dr = (rmax - rmin)/(nr - 1)
 r = _lib.linspaces([rmin, rmax], nr)
 R = np.meshgrid(*r)
 
-uv, p = run(nr, dr)
-plot_field(*R, p, uv)
-pyplot.show()
+if __name__ == '__main__':
+    UV, P = run(nr, dr)
+    plot_field(*R, P.array.T, *UV.array.T)
+    pyplot.show()
