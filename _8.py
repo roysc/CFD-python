@@ -53,3 +53,5 @@ def _run():
     pyplot.show()
 
 if __name__ == '__main__': _run()
+
+def test():pass

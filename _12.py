@@ -191,6 +191,7 @@ dr = (rmax - rmin)/(nr - 1)
 r = _lib.linspaces([rmin, rmax], nr)
 R = np.meshgrid(*r)
 
-uv, p = run(nr, dr)
-plot_field(*R, p, uv)
-pyplot.show()
+if __name__ == '__main__':
+    uv, p = run(nr, dr)
+    plot_field(*R, p, uv)
+    pyplot.show()

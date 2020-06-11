@@ -50,3 +50,5 @@ if __name__ == '__main__':
     set_hat(_u, dr)
     diffuse(_u, num_t)
     plot(_u)
+
+def test():pass
