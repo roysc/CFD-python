@@ -35,11 +35,13 @@ class SliceWindow:
         if k_a != k:
             if k != 1:
                 raise ValueError('unexpected shape', k)
+            data_shape = a_shape
         if k == 1: k = None
         self.k = k
         self.a = a
         self._mask = mask
         self._shape = self.a[mask].shape
+        self.data_shape = data_shape
 
         if isinstance(mask, slice):
             self._mask = (mask,) + (slice(None),)*(self.D-1)
@@ -53,6 +55,16 @@ class SliceWindow:
     def D(self):
         return len(self._shape) - bool(self.k or 0)
 
+    @property
+    def array(self): return self.a
+
+    @property
+    def bounds(self):
+        def or_(v, e):
+            if v is not None: return v
+            return e
+        return tuple((s.start or 0, or_(s.stop, 0)) for s in self._mask)
+
     def __getitem__(self, i):
         if i != slice(None):
             raise NotImplementedError
@@ -63,13 +75,6 @@ class SliceWindow:
             self.a[self._mask] = val
         else:
             raise NotImplementedError
-
-    @property
-    def bounds(self):
-        def or_(v, e):
-            if v is not None: return v
-            return e
-        return tuple((s.start or 0, or_(s.stop, 0)) for s in self._mask)
 
     # get slices, offset on axis
     def _nbr(self, shift, axis):
@@ -87,7 +92,6 @@ class SliceWindow:
             start -= over
             end = 0
         if end == 0: end = None
-        s = slice(start, end)
 
         if under or over:
             if under and over: raise TypeError('backing array is too small')
@@ -96,27 +100,24 @@ class SliceWindow:
         else:
             full = self.a
 
-        ret = full[tuple(_util.with_(self._mask, axis, s))]
-        return ret
+        slices = tuple(_util.with_(self._mask, axis, slice(start, end)))
+        return full[slices]
 
     def neighbors(self, shift):
         ret = np.array([self._nbr(shift, ax) for ax in range(self.D)])
         if len(ret) == 1:
             ret = ret[0]
-        # else:
-        #     ret = np.transpose(ret, axes=[*range(1, len(ret.shape)), 0])
         return ret
 
-    def diff_prev(self, i=1):
-        return self[:] - self.n[-1]
-        # return np.array([_util.diffprev(self.a, i, axis=ax) for ax in range(self.D)])
-
-    def diff_next(self, i=1):
-        return self.n[1] - self[:]
-        # return np.array([_util.diffnext(self.a, i, axis=ax) for ax in range(self.D)])
+    # equiv to util.diffprev(a, i, ax) for ax...
+    def diff_prev(self, i=1): return self[:] - self.n[-1]
+    def diff_next(self, i=1): return self.n[1] - self[:]
 
     def diff_central(self, i=1):
         return self.diff_next(i) - self.diff_prev(i)
+
+    def __repr__(self):
+        return f'SliceWindow([{self.a.shape} {self.a.dtype}], k={self.k}, mask=[{_show_slices(self._mask)}])'
 
 Window = SliceWindow
 
