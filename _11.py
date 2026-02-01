@@ -26,7 +26,7 @@ def build_b(rho, dt, UV, dr):
                   np.sum(C * C, axis=-1))
     return B
 
-def poisson_bounds(p):
+def set_poisson_bounds(p):
     # Neumann conditions
     p[0, :] = p[1, :]
     p[-1,:] = p[-2, :]
@@ -37,7 +37,7 @@ def poisson(P, B, dr, nt=50):
     for _ in range(nt):
         N = np.transpose(P.n[-1] + P.n[1], (1,2,0))
         P[:] = (np.dot(N, np.flip(dr)**2) - B[:] * np.prod(dr**2)) / (2 * np.dot(dr, dr))
-        poisson_bounds(P.array)
+        set_poisson_bounds(P.array)
     return P
 
 def cavity_bounds(uv):
